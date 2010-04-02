@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<script src="phonegap.js" type="text/javascript"></script>
+		<script>
+			function logMessage(){
+				window.debug.log("New message logged at " + new Date().toLocaleString());
+			}
+			
+			function listContacts(){
+				navigator.contacts.getAllContacts(function(contacts){
+					for(var i=0;i<contacts.length;i++){
+						window.debug.log("Contact:" + contacts[i].name.formatted + ":" + contacts[i].emails[0].address + ":" + contacts[i].phones[0].number);
+					}
+				}, function(){
+					 windwo.debug.log("Can not find any contact");
+				})
+			}
+			
+			function addContact(){
+				var contact = {name:'Wei Li', phone:'1234566', email:'test@example.com'};
+				navigator.contacts.newContact(contact, function(res){
+					if(res.result == "ok"){
+						alert("New Contact created");
+					}else{
+						alert("Can not create contact");
+					}
+				}, {});
+			}
+		</script>
+	</head>
+	<body>
+		<input type="button" value="Log A Message" onclick="logMessage()"></input>
+		<input type="button" value="List All Contacts" onclick="listContacts()"></input>
+		<input type="button" value="Add A Contact" onclick="addContact()"></input>
+	</body>
+</html>

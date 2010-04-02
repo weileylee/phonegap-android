@@ -1,11 +1,16 @@
 package com.phonegap;
 
+import java.util.ArrayList;
+
+import android.provider.Contacts;
 import android.provider.Contacts.ContactMethods;
 import android.provider.Contacts.People;
 import android.util.Log;
 import android.webkit.WebView;
 import android.app.Activity;
+import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.net.Uri;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
@@ -158,24 +163,24 @@ public class ContactManager {
 	            	email = getEmail(email_id);
 	            else
 	            	email = "";
-	            
+	            Log.d(LOG_TAG, "Found contact: " + name + ": " + phoneNumber + ":" + email);
 	            // Code for backwards compatibility with the OLD Contacts API
-	            if (all)
-	            	mView.loadUrl("javascript:navigator.ContactManager.droidAddContact('" + name + "','" + phoneNumber + "','" + email +"')");	            	
-	            else
+	            //if (all)
+	            //	mView.loadUrl("javascript:navigator.ContactManager.droidAddContact('" + name + "','" + phoneNumber + "','" + email +"')");	            	
+	            //else
 	            	mView.loadUrl("javascript:navigator.contacts.droidFoundContact('" + name + "','" + phoneNumber + "','" + email +"')");
 	            	            
 	        } while (cur.moveToNext());
-	        if (all)
-	        	mView.loadUrl("javascript:navigator.ContactManager.droidDone()");
-	        else
+	        //if (all)
+	        //	mView.loadUrl("javascript:navigator.ContactManager.droidDone()");
+	        //else
 	        	mView.loadUrl("javascript:navigator.contacts.droidDone();");
 	    }
 	    else
 	    {
-	    	if(all)
-	    		mView.loadUrl("javascript:navigator.ContactManager.fail()");
-	    	else
+	    	//if(all)
+	    	//	mView.loadUrl("javascript:navigator.ContactManager.fail()");
+	    	//else
 	    		mView.loadUrl("javascript:navigator.contacts.fail('None found!')");
 	    }
 	}	
@@ -199,7 +204,7 @@ public class ContactManager {
 	            if(data != null)
 	            {
 	            	data.email = email;	            
-	            	mView.loadUrl("javascript:navigator.Contacts.droidFoundContact('" + data.name + "','" + data.phone + "','" + data.email +"')");
+	            	mView.loadUrl("javascript:navigator.contacts.droidFoundContact('" + data.name + "','" + data.phone + "','" + data.email +"')");
 	            }	           
 	        } while (cur.moveToNext());
 	        mView.loadUrl("javascript:navigator.contacts.droidDoneContacts();");	        
@@ -287,5 +292,38 @@ public class ContactManager {
 		return email;		
 	}
 	
-	
+	public void addContact(String pName, String pNumber, String pEmail) {
+      Log.i(LOG_TAG, "Create new contact with name: " + pName + ", number: " + pNumber + ", email:" + pEmail);
+      try {
+        ContentValues values = new ContentValues();
+        values.put(People.NAME, pName);
+        //values.put(People.NUMBER, pNumber);
+        //values.put(People.PRIMARY_EMAIL_ID, People.ContactMethods.TYPE_HOME);
+        values.put(People.STARRED, 0);
+        Uri uri = mApp.getContentResolver().insert(mPeople, values);
+        Uri phoneUri = null;
+        Uri emailUri = null;
+
+        
+        phoneUri = Uri.withAppendedPath(uri, People.Phones.CONTENT_DIRECTORY);
+        values.clear();
+        values.put(People.Phones.TYPE, People.Phones.TYPE_MOBILE);
+        values.put(People.Phones.NUMBER, pNumber);
+        mApp.getContentResolver().insert(phoneUri, values);
+        
+        emailUri = Uri.withAppendedPath(uri, People.ContactMethods.CONTENT_DIRECTORY);
+
+        values.clear();
+        // ContactMethods.KIND is used to distinguish different kinds of
+        // contact methods, such as email, IM, etc.
+        values.put(People.ContactMethods.KIND, Contacts.KIND_EMAIL);
+        values.put(People.ContactMethods.DATA, pEmail);
+        values.put(People.ContactMethods.TYPE, People.ContactMethods.TYPE_HOME);
+        mApp.getContentResolver().insert(emailUri, values);
+        mView.loadUrl("javascript:navigator.contacts.droidDidCreateContact('" + pName + "','" + pNumber + "', '" + pEmail + "')");
+      } catch (Exception e) {
+        Log.e(LOG_TAG, "Exception encountered while inserting contact: " + e);
+        mView.loadUrl("javascript:navigator.contacts.droidFailCreateContact('" + pName + "','" + pNumber + "', '" + pEmail + "')");
+      }
+    }
 }

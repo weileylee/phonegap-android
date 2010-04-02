@@ -61,6 +61,8 @@ public class DroidGap extends Activity {
 	private CompassListener mCompass;
 	private Storage	cupcakeStorage;
 	private CryptoHandler crypto;
+	private DebugConsole mDebugConsole;
+	
 	
     /** Called when the activity is first created. */
 	@Override
@@ -101,6 +103,7 @@ public class DroidGap extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setLayoutAlgorithm(LayoutAlgorithm.NORMAL);
+        
 
     	Package pack = this.getClass().getPackage();
     	String appPackage = pack.getName();
@@ -109,8 +112,10 @@ public class DroidGap extends Activity {
         
         // Turn on DOM storage!
         WebViewReflect.setDomStorage(settings);
-        // Turn off native geolocation object in browser - we use our own :)
-        WebViewReflect.setGeolocationEnabled(settings, false);
+        
+        // Turn OFF Native Geolocation
+        WebViewReflect.setGeolocation(settings);
+        
         /* Bind the appView object to the gap class methods */
         bindBrowser(appView);
         if(cupcakeStorage != null)
@@ -137,6 +142,7 @@ public class DroidGap extends Activity {
     	netMan = new NetworkManager(this, appView);
     	mCompass = new CompassListener(this, appView);  
     	crypto = new CryptoHandler(appView);
+    	mDebugConsole = new DebugConsole();
     	
     	// This creates the new javascript interfaces for PhoneGap
     	appView.addJavascriptInterface(gap, "DroidGap");
@@ -148,6 +154,7 @@ public class DroidGap extends Activity {
     	appView.addJavascriptInterface(netMan, "NetworkManager");
     	appView.addJavascriptInterface(mCompass, "CompassHook");
     	appView.addJavascriptInterface(crypto, "GapCrypto");
+    	appView.addJavascriptInterface(mDebugConsole, "ConsoleHook");
     	
     	
     	if (android.os.Build.VERSION.RELEASE.startsWith("1."))
